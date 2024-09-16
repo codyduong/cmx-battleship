@@ -1,12 +1,5 @@
 # CMX Battleship
 
-## CMX Members
-- William Morris [morriswa] morris.william@ku.edu
-- Kevin Rivers
-- Timothy Holmes
-- Makenna Loewenherz
-- Rahul Bhattachan
-
 ## Project Setup Guide
 - Install node js 20+ https://nodejs.org/en/download/prebuilt-installer
 - Open project root directory in terminal
