@@ -114,6 +114,9 @@ export class GameTileComponent implements OnInit, OnDestroy {
 
   private detectTileLocationChange() {
     const gameTileLocation = this.gameTile?.nativeElement.getBoundingClientRect();
+    if (!gameTileLocation) {
+      return
+    }
     const x = gameTileLocation.x;
     const y = gameTileLocation.y;
     this.ships.setTileLocations(this.tileId, {

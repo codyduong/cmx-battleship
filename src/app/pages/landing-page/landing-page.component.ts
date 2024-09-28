@@ -53,15 +53,18 @@ export class LandingPageComponent implements OnInit {
   ]);
 
   // Lifecycle hook that runs when the component is initialized
+
   ngOnInit(): void {
     // Fetch game stats (such as number of players online) when the component is initialized
-    this.lobby.gameStats().then(r => this.stats.set(r)); // Once stats are fetched, they are set in the `stats` signal
+    this.lobby.gameStats()
+      .then(r => this.stats.set(r))
+      .catch((r) => console.warn!("server is offline, only offline mode available")); // Once stats are fetched, they are set in the `stats` signal
   }
 
   // Method to handle form submission when the user submits their name and selected number of ships
   async onSubmit() {
     // Ensure that both the player name and ship form are valid before proceeding
-    if (this.playerNameForm.valid && this.shipForm.valid) {
+    if (this.playerNameForm.valid && this.shipForm.valid && this.stats()?.playerCount != undefined) {
       // Call the joinLobby method from LobbyService with the player's name and selected number of ships
       await this.lobby.joinLobby({
         player_name: this.playerNameForm.value!, // Player name from form input
@@ -74,6 +77,21 @@ export class LandingPageComponent implements OnInit {
 
       // Navigate to the lobby page after successfully joining the game
       this.router.navigate(['/lobby']);
+    }
+  }
+
+  // Navigate to offline page and set it up
+  async onSubmitOffline() {
+    if (this.shipForm.valid) {
+      await this.lobby.joinLobbyOffline({
+        player_name: this.playerNameForm.value!,
+        num_ships: String(this.shipForm.value),
+      });
+
+      this.playerNameForm.reset(); 
+      this.shipForm.reset();
+
+      this.router.navigate(['/offline']);
     }
   }
 }

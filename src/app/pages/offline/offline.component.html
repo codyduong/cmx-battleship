@@ -1,0 +1,44 @@
+<app-cloud-background displayMode="partly_cloudy"/>
+<!-- Displays a cloud background with the "partly_cloudy" mode -->
+
+<div class="pixel-font">
+  <!-- Main container with a pixelated font style -->
+
+  <!-- Lobby title -->
+  <h1 style="text-align: center" class="game-title">Offline</h1>
+  <!-- Displays the title of the page at the center -->
+
+  <!-- Centered Button Row -->
+  <div class="flex-row mx-auto justify-content-center col-gap-2">
+    <button class="game-button" (click)="handleLogout()">Go Back</button>
+    <!-- Logout button triggers the handleLogout method when clicked -->
+  </div>
+
+  <br> <!-- Line break for spacing -->
+
+  <!-- Flex container for Players and Requests sections -->
+  <div class="flex-row vw-70 mx-auto col-gap-2">
+
+    <!-- Online Players Section -->
+
+    
+    <div class="player-col">
+      <!-- Section title -->
+      <h3 class="game-subtitle">Difficulty</h3>
+
+      <!-- List of online players with a Request button -->
+      <div *ngFor="let player of availablePlayerCache(); trackBy: trackPlayerId" class="mt-2 flex-row space-between-items">
+        <span>{{ player.player_name }}</span>
+        <!-- Displays the player's name and ID -->
+        <button class="game-button" (click)="handleCreateRequest(player.player_id)">Request</button>
+        <!-- Button to send a match request to the player -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer section at the bottom of the page -->
+  <div class="footer">
+    <span>&copy; 2024 Battleship Game. All rights reserved.</span>
+    <!-- Displays copyright information -->
+  </div>
+</div>

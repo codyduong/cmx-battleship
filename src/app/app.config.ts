@@ -6,6 +6,7 @@ import {LobbyService} from "./services/lobby.service";
 import {ShipDragAndDropService} from "./services/ship-drag-and-drop.service";
 import {ActiveGameService} from "./services/active-game.service";
 import {SessionAuthenticationService} from "./services/session-authentication.service";
+import { ApiClientOffline } from "./services/api-client-offline.service";
 
 
 
@@ -14,6 +15,7 @@ export const AppConfig: ApplicationConfig = {
     // declare global services here
     SessionAuthenticationService,
     ApiClient,
+    ApiClientOffline,
     LobbyService,
     ShipDragAndDropService,
     ActiveGameService,

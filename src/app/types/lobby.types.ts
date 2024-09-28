@@ -15,6 +15,7 @@ export type UserSession = {
   player_id: string;
   player_name: string;
   num_ships: string;
+  offline: boolean;
 }
 
 //Displays the number of players the game.

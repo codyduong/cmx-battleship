@@ -29,16 +29,26 @@
     <app-radio-button-group class="ship-form-buttons" [radioButtonFormControl]="shipForm"/>
     <br>
 
-
-    <div class="big-red-game-button" >
+    <div class="game-buttons online" >
+      <div
+          (click)="onSubmitOffline()"
+          [ngClass]="{
+            'disabled':!shipForm.valid,
+            'ready': shipForm.valid
+          }" class="game-button pushable"
+        >   
+            play
+            offline
+        </div>
         <div
           (click)="onSubmit()"
           [ngClass]="{
-            'disabled':!playerNameForm.valid||!shipForm.valid,
-            'ready': !(!playerNameForm.valid||!shipForm.valid)
-          }" class="big-red-game-button-pushable"
+            'disabled':!playerNameForm.valid||!shipForm.valid||(this.stats()?.playerCount == undefined),
+            'ready': !(!playerNameForm.valid||!shipForm.valid||(this.stats()?.playerCount == undefined))
+          }" class="game-button pushable"
         >
-            submit
+            play
+            online
         </div>
     </div> <!-- button created with <button> tag, (click) waits for it to be click, then calls onSubmit() -->
 

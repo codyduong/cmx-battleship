@@ -1,0 +1,31 @@
+@use "src/styles/variables" as *; // Importing variables from the global styles file for consistency
+
+// Styling for the player column section, applied to both the online players and requests columns
+.player-col {
+  display: flex;
+  flex-direction: column;
+  background-color: $surface-color; // Sets the background color of the player section using a variable for flexibility
+  padding: 20px; // Adds padding around the content inside the player columns
+  border-radius: 10px; // Rounds the corners of the player column
+  width: 100%; // Ensures the player column takes up the full width of its container
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); // Adds a subtle shadow for depth
+}
+
+// Styling for the footer section at the bottom of the page
+.footer {
+  padding: 10px; // Adds padding inside the footer for better spacing
+  color: white; // Sets the text color to white for contrast against the background
+  text-align: center; // Centers the content inside the footer
+  width: 100vw; // Ensures the footer takes up the full width of the viewport
+  position: absolute; // Positions the footer at the bottom of the page
+  bottom: 0; // Anchors the footer to the bottom of the viewport
+  left: 0; // Ensures the footer starts at the far left of the page
+  line-height: $font-size-xs; // Adjusts line height using a predefined font size variable
+
+  // Span element inside the footer (for copyright text or similar)
+  span {
+    padding: 0; // Removes any additional padding from the span
+    margin: 0; // Removes any margin around the span
+    font-size: $font-size-xs; // Sets the font size to a smaller size using the variable for flexibility
+  }
+}

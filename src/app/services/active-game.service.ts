@@ -1,7 +1,10 @@
 import { inject, Injectable, signal, WritableSignal } from "@angular/core";
 import { ApiClient } from "./api-client.service"; // ApiClient service to interact with the backend API
-import { GameBoard, GamePhase, GameSession } from "../types/game.types"; // Game-related types
+import { GameBoard, GamePhase, GameSession, GameState } from "../types/game.types"; // Game-related types
 import { BehaviorSubject } from "rxjs"; // RxJS BehaviorSubject for event handling and state management
+import { LobbyService } from "./lobby.service";
+import { getSessionInfoFromLocalStorage } from "../utils/offlinehelper";
+import { ApiClientOffline } from "./api-client-offline.service";
 
 @Injectable() // Marks this service as injectable in the dependency injection system
 export class ActiveGameService {
@@ -11,6 +14,8 @@ export class ActiveGameService {
 
   // Injecting services
   private api = inject(ApiClient); // Inject the ApiClient service to handle API requests
+  private api_offline = inject(ApiClientOffline);
+  private lobby = inject(LobbyService);
 
   // BehaviorSubject to handle events, initializing with a 'type' of 'init'
   event = new BehaviorSubject<{ type: string }>({ type: 'init' });
@@ -31,6 +36,13 @@ export class ActiveGameService {
 
   // Refresh the current game session by fetching the latest data from the API
   async refreshGameSession(): Promise<GameSession | undefined> {
+    const offline = this.lobby.sessionInfo()?.offline ?? getSessionInfoFromLocalStorage()?.offline
+    if (offline) {
+      const response = await this.api_offline.getGameSession(); // API call to get the current game session
+      this._gameSession.set(response); // Update the session with the response
+      return response; // Return the updated game session
+    }
+
     const response = await this.api.getGameSession(); // API call to get the current game session
     this._gameSession.set(response); // Update the session with the response
     return response; // Return the updated game session

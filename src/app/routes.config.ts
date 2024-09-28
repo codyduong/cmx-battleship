@@ -27,6 +27,12 @@ const routesConfig: Routes = [
       .then(m=>m.PlayGameComponent)
   },
   {
+    path: "offline",
+    canActivate: [UserSessionGuard],
+    loadComponent: ()=>import('src/app/pages/offline/offline.component')
+      .then(m=>m.OfflineComponent)
+  },
+  {
     path: "",
     pathMatch: "full",
     redirectTo: "start"
