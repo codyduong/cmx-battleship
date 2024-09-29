@@ -9,12 +9,6 @@ export const ActiveGameGuard: CanActivateFn = async () => {
     const lobby = inject(LobbyService);
     const router = inject(Router);
 
-    const isOffline = lobby.sessionInfo()?.offline ?? getSessionInfoFromLocalStorage()?.offline ?? false;
-
-    if (isOffline) {
-        return true;
-    }
-
     const gameState = await gameService.refreshGameSession();
     
     if (!gameState) {

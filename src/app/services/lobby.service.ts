@@ -24,7 +24,8 @@ export class LobbyService {
         return null
       }
     })()
-    if (sessionInfoCache && sessionInfo.offline == false) {
+    let offline = this.sessionInfo()?.offline ?? sessionInfo?.offline ?? false
+    if (sessionInfoCache && offline == false) {
       // Validate the stored session info by confirming the session is still valid
       this.api.confirmValidSession()
         .then((valid) => {
@@ -37,6 +38,8 @@ export class LobbyService {
             localStorage.removeItem("lobby-service.sessionInfo");
           }
         });
+    } else if (offline == true) {
+      this.sessionInfo.set(sessionInfo);
     }
   }
 

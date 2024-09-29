@@ -9,8 +9,12 @@ export const UserSessionGuard: CanActivateFn = async () => {
   const router = inject(Router);
 
   const isOffline = lobby.sessionInfo()?.offline ?? getSessionInfoFromLocalStorage()?.offline ?? false;
+  if (isOffline) {
+    return true;
+  }
+
   const isLoggedIn = await lobby.isLoggedIn();
-  if (isLoggedIn || isOffline) {
+  if (isLoggedIn) {
     isLoggedIn && await lobby.getAvailablePlayers();
     return true;
   } else {

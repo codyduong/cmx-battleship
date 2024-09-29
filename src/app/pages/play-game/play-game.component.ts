@@ -72,7 +72,11 @@ export class PlayGameComponent implements OnInit {
   // Handler to exit the game, reset services, and navigate to the lobby
   async handleExit() {
     await this.game.forfeitGame(); // Forfeit the current game
-    this.router.navigate(['/lobby']); // Navigate to the lobby
+    if (this.game.offline) {
+      this.router.navigate(['/offline']);
+    } else {
+      this.router.navigate(['/lobby']);  // Navigate to the lobby
+    }
     this.shipSelection.resetShipSelectorService(); // Reset the ship selection service
     this.game.resetActiveGameService(); // Reset the active game service
   }
@@ -105,7 +109,7 @@ export class PlayGameComponent implements OnInit {
         this.router.navigate(['/lobby']); // Navigate to lobby if the game is incomplete
       }
 
-      await sleep(3_000); // Poll every 3 seconds
+      await sleep(1_000); // Poll every 1 second (increases responsiveness)
     }
   }
 

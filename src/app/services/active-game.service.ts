@@ -23,6 +23,10 @@ export class ActiveGameService {
   // State management using signals
   private _gameSession: WritableSignal<GameSession | undefined> = signal(undefined); // Holds the current game session
   private _currentTileSelection: WritableSignal<string | undefined> = signal(undefined); // Holds the currently selected tile
+  
+  get offline(): boolean {
+    return this.lobby.sessionInfo()?.offline ?? getSessionInfoFromLocalStorage()?.offline ?? false
+  }
 
   // Getter for the currently selected tile
   get currentSelection(): string | undefined {
@@ -36,11 +40,10 @@ export class ActiveGameService {
 
   // Refresh the current game session by fetching the latest data from the API
   async refreshGameSession(): Promise<GameSession | undefined> {
-    const offline = this.lobby.sessionInfo()?.offline ?? getSessionInfoFromLocalStorage()?.offline
-    if (offline) {
-      const response = await this.api_offline.getGameSession(); // API call to get the current game session
-      this._gameSession.set(response); // Update the session with the response
-      return response; // Return the updated game session
+    if (this.offline) {
+      const response = await this.api_offline.getGameSession();
+      this._gameSession.set(response);
+      return response;
     }
 
     const response = await this.api.getGameSession(); // API call to get the current game session
@@ -82,8 +85,16 @@ export class ActiveGameService {
 
   // Start the game by sending the selected ships to the server
   async startGame(ships: GameBoard): Promise<void> {
-    await this.api.startGame(ships); // API call to start the game with the player's selected ships
-    const game_state = await this.api.getGameSession(); // Fetch the updated game session
+    let game_state;
+
+    if (this.offline) {
+      await this.api_offline.startGame(ships); // API call to start the game with the player's selected ships
+      game_state = await this.api_offline.getGameSession(); // Fetch the updated game session
+    } else {
+      await this.api.startGame(ships); // API call to start the game with the player's selected ships
+      game_state = await this.api.getGameSession(); // Fetch the updated game session
+    }
+
     this._gameSession.set(game_state); // Update the game session with the new state
     this._currentTileSelection.set(undefined); // Clear the current tile selection
     this.event.next({ type: 'updateState' }); // Trigger an event to notify that the state has updated
@@ -96,6 +107,10 @@ export class ActiveGameService {
 
   // Forfeit the current game by making an API call to forfeit
   forfeitGame() {
+    if (this.offline) {
+      return this.api_offline.forfeitGame();
+    }
+
     return this.api.forfeitGame(); // API call to forfeit the game
   }
 
@@ -110,11 +125,18 @@ export class ActiveGameService {
     const currentTile = this._currentTileSelection(); // Get the currently selected tile
     if (!currentTile) throw new Error('need to select a tile to attack'); // Throw an error if no tile is selected
 
-    await this.api.makeMove(currentTile); // API call to make the move (attack the selected tile)
-    const response = await this.api.getGameSession(); // Fetch the updated game session after the move
-    this._gameSession.set(response); // Update the game session with the new state
+    let game_state;
+    if (this.offline) {
+      await this.api_offline.makeMove(currentTile); // API call to make the move (attack the selected tile)
+      game_state = await this.api_offline.getGameSession(); // Fetch the updated game session after the move
+    } else {
+      await this.api.makeMove(currentTile); // API call to make the move (attack the selected tile)
+      game_state = await this.api.getGameSession(); // Fetch the updated game session after the move
+    }
+    
+    this._gameSession.set(game_state); // Update the game session with the new state
     this._currentTileSelection.set(undefined); // Clear the current tile selection
     this.event.next({ type: 'updateState' }); // Trigger an event to notify that the state has updated
-    return response; // Return the updated game session
+    return game_state; // Return the updated game session
   }
 }
