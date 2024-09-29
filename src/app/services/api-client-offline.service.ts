@@ -17,6 +17,7 @@ export class ApiClientOffline {
     active_turn: "p1",
     player_one_or_two: "p1",
   }
+  private ai_difficulty: number = 1; // goes from 1-3, 1 being easiest, 3 being hardest
 
   /**
    * Public API method to start a new game with the selected ships.
@@ -40,7 +41,12 @@ export class ApiClientOffline {
    * @returns A promise that resolves when the game is forfeited
    */
   forfeitGame() {
-    
+    // we reset the game state to the initial game state
+    this.game_session = {
+      game_phase: "selct",
+      active_turn: "p1",
+      player_one_or_two: "p1",
+    }
   }
 
   /**
@@ -57,6 +63,6 @@ export class ApiClientOffline {
    * Initializes a game with a difficulty
    */
   initializeGameSession(difficulty: '0' | '1' | '2' | '3') {
-
+    this.ai_difficulty = Number(difficulty);
   }
 }
