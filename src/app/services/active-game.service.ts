@@ -42,6 +42,7 @@ export class ActiveGameService {
   async refreshGameSession(): Promise<GameSession | undefined> {
     if (this.offline) {
       const response = await this.api_offline.getGameSession();
+      // console.debug(response);
       this._gameSession.set(response);
       return response;
     }
