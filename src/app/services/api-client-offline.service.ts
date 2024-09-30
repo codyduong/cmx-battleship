@@ -92,16 +92,57 @@ export class ApiClientOffline {
     return true;
   }
 
-  // Set up AI ships randomly
+  // Set up AI ships randomly based on the player's number of ships
   private initializeAiShips(): void {
     // ai will always choose the same number of ships as the player
-    const shipLengths = Array.from({length: this.getPlayerShipsRemaining()}, (_, i) => i +1);
+    const shipLengths = Array.from({ length: this.player_ships.length }, (_, i) => i + 1);
 
-    // TODO, this is an array of arrays such as [["A1"], ["B2", "B3"]]
-    const aiShipPositions: string[][] = []
+    // Initialize the AI's ship positions array
+    const aiShipPositions: string[][] = [];
 
+    // Create a 2D array to keep track of which positions are available on the board
+    const availablePositions: boolean[][] = Array.from({ length: this.gridSize }, () => Array(this.gridSize).fill(true));
+
+    // Function to place a ship on the grid
+    const placeShip = (length: number): string[] => {
+      let isPlaced = false;
+      let ship: string[] = [];
+
+      while (!isPlaced) {
+        // Randomly choose a starting position and orientation for the ship
+        const isVertical = Math.random() < 0.5;
+        const startRow = randomInt(0, this.gridSize - (isVertical ? length : 1));
+        const startCol = randomInt(0, this.gridSize - (!isVertical ? length : 1));
+
+        // Check if the ship can be placed at the chosen position
+        if (this.canPlaceShip(startRow, startCol, length, isVertical, availablePositions)) {
+          ship = [];
+
+          // Add ship positions to the array and mark them as occupied
+          for (let i = 0; i < length; i++) {
+            const r = isVertical ? startRow + i : startRow;
+            const c = isVertical ? startCol : startCol + i;
+            ship.push(this.convertToPosition(r, c));
+            availablePositions[r][c] = false;
+          }
+
+          isPlaced = true;
+        }
+      }
+
+      return ship;
+    };
+
+    // Place each ship for the AI based on the ship lengths
+    for (const length of shipLengths) {
+      aiShipPositions.push(placeShip(length));
+    }
+
+    // Assign the generated ship positions to the AI's ships
     this.ai_ships = aiShipPositions;
+    console.debug("AI Ships:", this.ai_ships);
   }
+
 
   // used for ai thinking
   private didSinkShip(hit: string): boolean {
