@@ -98,14 +98,53 @@ export class ApiClientOffline {
     const shipLengths = Array.from({length: this.getPlayerShipsRemaining()}, (_, i) => i +1);
 
     // TODO, this is an array of arrays such as [["A1"], ["B2", "B3"]]
-    const aiShipPositions = []
+    const aiShipPositions: string[][] = []
 
     this.ai_ships = aiShipPositions;
   }
 
+  // used for ai thinking
+  private didSinkShip(hit: string): boolean {
+    return this.player_ships.some(ship => ship.every(tile => this.ai_hits.includes(tile)));
+  }
+
+  // used for medium only. it mimics "following" behavior. by knowing which hits are successful
+  // but not part of sinks, we can deduce where we should strike next. if we have a successful
+  // hit next to an existing hit, and neither are part of a sunk ship, then it is logical to conclude
+  // we must strike opposite the adjacent hit.
+  private getOppositeMove(originalHit: string, adjacentHit: string): string | null {
+    const [rowLetter1, colNumberStr1] = [originalHit[0], originalHit.substring(1)];
+    const [rowLetter2, colNumberStr2] = [adjacentHit[0], adjacentHit.substring(1)];
+
+    const row1 = "ABCDEFGHIJ".indexOf(rowLetter1);
+    const col1 = parseInt(colNumberStr1, 10) - 1;
+    const row2 = "ABCDEFGHIJ".indexOf(rowLetter2);
+    const col2 = parseInt(colNumberStr2, 10) - 1;
+
+    let oppositeRow = row1;
+    let oppositeCol = col1;
+
+    // Determine the opposite direction
+    if (row1 > row2) {
+      oppositeRow = row1 + 1; // Go downward
+    } else if (row1 < row2) {
+      oppositeRow = row1 - 1; // Go upward
+    } else if (col1 > col2) {
+      oppositeCol = col1 + 1; // Go to the right
+    } else if (col1 < col2) {
+      oppositeCol = col1 - 1; // Go to the left
+    }
+
+    if (oppositeRow >= 0 && oppositeRow < 10 && oppositeCol >= 0 && oppositeCol < 10) {
+      return this.convertToPosition(oppositeRow, oppositeCol);
+    }
+    
+    return null;
+  }
+
   // make ai move based on difficulty
   private makeAiMove() {
-    private lastAiHit: string | null = null;  // Keep track of the last hit made by the AI for the Medium AI logic
+    let lastAiHit: string | null = null;  // Keep track of the last hit made by the AI for the Medium AI logic
     let availableMoves = this.generateAvailableMoves();
     let chosenMove: string;
 
@@ -121,46 +160,61 @@ export class ApiClientOffline {
             // A. hit, then choose an orthogonal direction
             // B. sunk a ship, then choose a random location again
             // C. missed
-            //IDK IF CASE 2 and 3 make sense or work- Harrison Wendt 9/28/24 
-            // TODO
-            if (this.lastAiHit) {
-              // Try orthogonal tiles if there is a previous hit
-              let orthogonalMoves = this.getOrthogonalMoves(this.lastAiHit);
-      
-              // Filter out moves already made
-              orthogonalMoves = orthogonalMoves.filter(move => availableMoves.includes(move));
-      
-              if (orthogonalMoves.length > 0) {
-                // Choose from orthogonal moves
-                chosenMove = orthogonalMoves[Math.floor(Math.random() * orthogonalMoves.length)];
-              } else {
-                // If no valid orthogonal moves, fall back to random
-                this.lastAiHit = null;
+            // 
+            // IDK IF CASE 2 and 3 make sense or work- Harrison Wendt 9/28/24 
+            //
+            // Improved behavior such that the ai will choose in the opposite direction of adjacent
+            // strikes, such that it mimics "following" along a ship -@codyduong
+            let incompleteSinks: string[] = this.ai_hits.filter(hit => !this.didSinkShip(hit));
+
+            if (incompleteSinks.length === 0) {
+                // If no incomplete sinks, pick a random move
                 chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-              }
-            } else {
-              // Randomly select a move if no previous hit
-              chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                break;
+            }
+        
+            // Pick the last incomplete sink
+            const lastAiHit = incompleteSinks[incompleteSinks.length - 1];
+            let orthogonalMoves = this.getOrthogonalMoves(lastAiHit).filter(move => availableMoves.includes(move));
+        
+            if (orthogonalMoves.length === 0) {
+                // If no orthogonal moves are available, fallback to random move
+                chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                break;
+            }
+        
+            // Check if we have an adjacent hit to our most recent incomplete sink
+            const adjacentHits = orthogonalMoves.filter(move => this.ai_hits.includes(move));
+        
+            switch (adjacentHits.length) {
+                case 0:
+                    // If no adjacent hits, pick an orthogonal move randomly
+                    chosenMove = orthogonalMoves[Math.floor(Math.random() * orthogonalMoves.length)];
+                    break;
+        
+                default:
+                    // If there are adjacent hits, check if the adjacent hit is part of a sunk ship
+                    const chosenAdjacent = adjacentHits[0];
+                    const adjacentIsSunk = this.didSinkShip(chosenAdjacent);
+        
+                    if (adjacentIsSunk) {
+                        // If adjacent hit is part of a sunk ship, pick another orthogonal move
+                        chosenMove = orthogonalMoves[Math.floor(Math.random() * orthogonalMoves.length)];
+                    } else {
+                        // If adjacent hit is not part of a sunk ship, strike in the opposite direction
+                        const oppositeMove = this.getOppositeMove(lastAiHit, chosenAdjacent);
+                        chosenMove = (oppositeMove && availableMoves.includes(oppositeMove)) 
+                            ? oppositeMove 
+                            : orthogonalMoves[Math.floor(Math.random() * orthogonalMoves.length)];
+                    }
+                    break;
             }
             break;
         case 3:
-            // Hard AI: just choose the locations of unsunk player ships
-            // You can use this.getHealthyPlayerShips() and either choose in order, or randomly from this array 
-
-            // TODO
-             // Hard AI: Target player ships based on unsunk ship locations
+            // Hard AI: Target player ships based on unsunk ship locations
             const healthyPlayerShips = this.getHealthyPlayerShips();
-            if (healthyPlayerShips.length > 0) {
-              // Choose a random tile from unsunk player ships
-              chosenMove = healthyPlayerShips[Math.floor(Math.random() * healthyPlayerShips.length)];
-            } else {
-              // Fallback to random if no unsunk ship tiles are available
-              chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-            }
-              break;
-            
-            //chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-            //break;
+            chosenMove = healthyPlayerShips[Math.floor(Math.random() * healthyPlayerShips.length)];
+            break;
         default:
             // Fallback to random move
             chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
