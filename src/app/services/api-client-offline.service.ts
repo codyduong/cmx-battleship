@@ -105,10 +105,11 @@ export class ApiClientOffline {
 
   // make ai move based on difficulty
   private makeAiMove() {
+    private lastAiHit: string | null = null;  // Keep track of the last hit made by the AI for the Medium AI logic
     let availableMoves = this.generateAvailableMoves();
     let chosenMove: string;
 
-    switch (this.ai_difficulty) {
+    switch (this.ai_difficulty) { 
         case 1:
             // Easy AI: choose a random available move
             chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
@@ -120,17 +121,46 @@ export class ApiClientOffline {
             // A. hit, then choose an orthogonal direction
             // B. sunk a ship, then choose a random location again
             // C. missed
-
+            //IDK IF CASE 2 and 3 make sense or work- Harrison Wendt 9/28/24 
             // TODO
-            chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            if (this.lastAiHit) {
+              // Try orthogonal tiles if there is a previous hit
+              let orthogonalMoves = this.getOrthogonalMoves(this.lastAiHit);
+      
+              // Filter out moves already made
+              orthogonalMoves = orthogonalMoves.filter(move => availableMoves.includes(move));
+      
+              if (orthogonalMoves.length > 0) {
+                // Choose from orthogonal moves
+                chosenMove = orthogonalMoves[Math.floor(Math.random() * orthogonalMoves.length)];
+              } else {
+                // If no valid orthogonal moves, fall back to random
+                this.lastAiHit = null;
+                chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+              }
+            } else {
+              // Randomly select a move if no previous hit
+              chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
             break;
         case 3:
             // Hard AI: just choose the locations of unsunk player ships
             // You can use this.getHealthyPlayerShips() and either choose in order, or randomly from this array 
 
             // TODO
-            chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
-            break;
+             // Hard AI: Target player ships based on unsunk ship locations
+            const healthyPlayerShips = this.getHealthyPlayerShips();
+            if (healthyPlayerShips.length > 0) {
+              // Choose a random tile from unsunk player ships
+              chosenMove = healthyPlayerShips[Math.floor(Math.random() * healthyPlayerShips.length)];
+            } else {
+              // Fallback to random if no unsunk ship tiles are available
+              chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            }
+              break;
+            
+            //chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+            //break;
         default:
             // Fallback to random move
             chosenMove = availableMoves[Math.floor(Math.random() * availableMoves.length)];
@@ -187,6 +217,22 @@ export class ApiClientOffline {
       my_miss_tile_ids: this.getHealthyPlayerShips(), // this is your remaining ships
       my_ships_remaining: playerShips,
     };
+  }
+  private getOrthogonalMoves(tile: string): string[] {
+    const row = tile.charAt(0);
+    const col = parseInt(tile.substring(1), 10);
+    const letters = "ABCDEFGHIJ";
+    
+    let moves: string[] = [];
+  
+    // Calculate possible orthogonal moves
+    const rowIdx = letters.indexOf(row);
+    if (rowIdx > 0) moves.push(letters[rowIdx - 1] + col); // Up
+    if (rowIdx < this.gridSize - 1) moves.push(letters[rowIdx + 1] + col); // Down
+    if (col > 1) moves.push(row + (col - 1)); // Left
+    if (col < this.gridSize) moves.push(row + (col + 1)); // Right
+  
+    return moves;
   }
 
   /**
@@ -261,4 +307,6 @@ export class ApiClientOffline {
   initializeGameSession(difficulty: '0' | '1' | '2' | '3'): void {
     this.ai_difficulty = Number(difficulty);
   }
+  
+  
 }
