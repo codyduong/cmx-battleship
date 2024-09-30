@@ -253,7 +253,7 @@ export class ApiClientOffline {
             break;
         case 3:
             // Hard AI: Target player ships based on unsunk ship locations
-            const healthyPlayerShips = this.getHealthyPlayerShips();
+            const healthyPlayerShips = this.player_ships.flat().filter((loc) => !this.ai_hits.includes(loc))
             chosenMove = healthyPlayerShips[Math.floor(Math.random() * healthyPlayerShips.length)];
             break;
         default:
